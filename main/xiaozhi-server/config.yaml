@@ -70,16 +70,19 @@ CMD_exit:
   - "退出"
   - "关闭"
 
+# 阿里百炼平台api_key
+ali_bail_api_key: &ali_bail_api_key you_api_key
+
 # 具体处理时选择的模块(The module selected for specific processing)
 selected_module:
   # 语音活动检测模块，默认使用SileroVAD模型
   VAD: SileroVAD
   # 语音识别模块，默认使用FunASR本地模型
-  ASR: FunASR
-  # 将根据配置名称对应的type调用实际的LLM适配器
-  LLM: ChatGLMLLM
+  ASR: AliYunBaiLASR
+  # 将根据配置名称对应的type调用实际的LLM适配器：ChatGLMLLM,AliLLM
+  LLM: AliLLM
   # TTS将根据配置名称对应的type调用实际的TTS适配器
-  TTS: EdgeTTS
+  TTS: AliyunBaiLTTS
   # 记忆模块，默认不开启记忆；如果想使用超长记忆，推荐使用mem0ai；如果注重隐私，请使用本地的mem_local_short
   Memory: nomem
   # 意图识别模块，默认使用function_call。开启后，可以播放音乐、控制音量、识别退出指令
@@ -110,8 +113,8 @@ Intent:
       # play_music是服务器自带的音乐播放，hass_play_music是通过home assistant控制的独立外部程序音乐播放
       # 如果用了hass_play_music，就不要开启play_music，两者只留一个
       - play_music
-      #- hass_get_state
-      #- hass_set_state
+      - hass_get_state
+      - hass_set_state
       #- hass_play_music
 
 # 插件的基础配置
@@ -133,8 +136,8 @@ plugins:
     devices:
       - 客厅,玩具灯,switch.cuco_cn_460494544_cp1_on_p_2_1
       - 卧室,台灯,switch.iot_cn_831898993_socn1_on_p_2_1
-    base_url: http://homeassistant.local:8123
-    api_key: 你的home assistant api访问令牌
+    base_url: http://192.168.1.9:8123/
+    api_key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhNzI4OWZhYmE4OTA0NDQ3OTI2OTI2ZmVhM2JkMTk1NyIsImlhdCI6MTc0Mjg2OTI4MCwiZXhwIjoyMDU4MjI5MjgwfQ.s012SoEMlCRHxrbFz3CF3JFkLd_sMzXPIBYCdF5pjFk
   play_music:
     music_dir: "./music"  # 音乐文件存放路径，将从该目录及子目录下搜索音乐文件
     music_ext: # 音乐文件类型，p3格式效率最高
@@ -172,6 +175,11 @@ ASR:
     access_token: 你的火山引擎语音合成服务access_token
     cluster: volcengine_input_common
     output_dir: tmp/
+  AliYunBaiLASR:
+    type: aliyun_bail
+    api_key: *ali_bail_api_key
+    model: gummy-chat-v1
+    output_dir: tmp/
 VAD:
   SileroVAD:
     threshold: 0.5
@@ -187,7 +195,7 @@ LLM:
     # 可在这里找到你的 api_key https://bailian.console.aliyun.com/?apiKey=1#/api-key
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     model_name: qwen-turbo
-    api_key: 你的deepseek web key
+    api_key: *ali_bail_api_key
     temperature: 0.7  # 温度值
     max_tokens: 500   # 最大生成token数
     top_p: 1         
@@ -515,6 +523,13 @@ TTS:
     headers: # 自定义请求头
       # Authorization: Bearer xxxx
     format: wav # 接口返回的音频格式
+    output_dir: tmp/
+  AliyunBaiLTTS:
+    # 阿里云百炼大模型
+    type: aliyun_bail
+    api_key: *ali_bail_api_key
+    model: cosyvoice-v1
+    voice: longtong
     output_dir: tmp/
 # 模块测试配置
 module_test:
