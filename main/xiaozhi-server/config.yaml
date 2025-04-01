@@ -193,7 +193,8 @@ ASR:
   AliYunBaiLASR:
     type: aliyun_bail
     api_key: *ali_bail_api_key
-    model: gummy-chat-v1
+    #gummy-chat-v1,paraformer-realtime-v2
+    model: paraformer-realtime-v2
     output_dir: tmp/
 VAD:
   SileroVAD:

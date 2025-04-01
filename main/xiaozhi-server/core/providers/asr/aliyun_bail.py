@@ -3,6 +3,7 @@ import os
 import time
 import uuid
 import wave
+from http import HTTPStatus
 from typing import Optional, Tuple, List
 
 import dashscope
@@ -14,6 +15,7 @@ from core.providers.asr.base import ASRProviderBase
 
 TAG = __name__
 logger = setup_logging()
+sample_rate = 16000
 
 class ASRProvider(ASRProviderBase):
     def __init__(self, config: dict, delete_audio_file: bool):
@@ -31,7 +33,7 @@ class ASRProvider(ASRProviderBase):
         file_name = f"asr_{session_id}_{uuid.uuid4()}.wav"
         file_path = os.path.join(self.output_dir, file_name)
 
-        decoder = opuslib_next.Decoder(16000, 1)  # 16kHz, 单声道
+        decoder = opuslib_next.Decoder(sample_rate, 1)  # 16kHz, 单声道
         pcm_data = []
 
         for opus_packet in opus_data:
@@ -44,24 +46,22 @@ class ASRProvider(ASRProviderBase):
         with wave.open(file_path, "wb") as wf:
             wf.setnchannels(1)
             wf.setsampwidth(2)  # 2 bytes = 16-bit
-            wf.setframerate(16000)
+            wf.setframerate(sample_rate)
             wf.writeframes(b"".join(pcm_data))
 
         return file_path
 
-    async def _send_request(self, audio_data: List[bytes], segment_size: int) -> Optional[str]:
+    async def _send_request_gummy(self, audio_data: List[bytes], segment_size: int) -> Optional[str]:
         """Send request to Aliyun ASR service."""
         try:
-            # 设置 API Key
-
             # 创建回调对象
-            callback = Callback()
+            callback = CallbackGummy()
 
             # 初始化翻译识别聊天对象
             translator = TranslationRecognizerChat(
                 model=self.model,
                 format="wav",
-                sample_rate=16000,
+                sample_rate=sample_rate,
                 callback=callback,
             )
             translator.start()
@@ -91,10 +91,47 @@ class ASRProvider(ASRProviderBase):
             logger.bind(tag=TAG).error(f"ASR request failed: {e}", exc_info=True)
             return None
 
+    async def _send_request_paraformer(self, audio_data: List[bytes], segment_size: int) -> Optional[str]:
+        try:
+            # 创建回调对象
+            callback = CallbackParaformer()
+
+            # 初始化翻译识别聊天对象
+            recognition = Recognition(model=self.model,
+                                      format='wav',
+                                      sample_rate=sample_rate,
+                                      callback=callback)
+            recognition.start()
+
+            # 读取音频数据并分段发送
+            audio_data_len = len(audio_data)
+            offset = 0
+            while offset < audio_data_len:
+                chunk = audio_data[offset:offset + segment_size]
+                if not recognition.send_audio_frame(chunk):
+                    print("sentence end, stop sending")
+                    break
+                offset += segment_size
+
+            logger.bind(tag=TAG).info("调用阿里云百炼语音识别前：")
+            recognition.stop()
+            logger.bind(tag=TAG).info("调用阿里云百炼语音识别后：")
+
+            # 获取识别结果
+            if callback.transcription_result is not None:
+                return callback.transcription_result['text']
+            else:
+                logger.bind(tag=TAG).info("XXXXX语音转换没有结果：callback.transcription_result is None")
+                return None
+
+        except Exception as e:
+            logger.bind(tag=TAG).error(f"ASR request failed: {e}", exc_info=True)
+            return None
+
     @staticmethod
     def decode_opus(opus_data: List[bytes], session_id: str) -> List[bytes]:
 
-        decoder = opuslib_next.Decoder(16000, 1)  # 16kHz, 单声道
+        decoder = opuslib_next.Decoder(sample_rate, 1)  # 16kHz, 单声道
         pcm_data = []
 
         for opus_packet in opus_data:
@@ -142,7 +179,7 @@ class ASRProvider(ASRProviderBase):
             with wave.open(wav_buffer, "wb") as wav_file:
                 wav_file.setnchannels(1)  # 设置声道数
                 wav_file.setsampwidth(2)  # 设置采样宽度
-                wav_file.setframerate(16000)  # 设置采样率
+                wav_file.setframerate(sample_rate)  # 设置采样率
                 wav_file.writeframes(combined_pcm_data)  # 写入 PCM 数据
 
             # 获取封装后的 WAV 数据
@@ -153,7 +190,15 @@ class ASRProvider(ASRProviderBase):
 
             # 语音识别
             start_time = time.time()
-            text = await self._send_request(wav_data, segment_size)
+
+            if "paraformer" in self.model:
+                text = await self._send_request_paraformer(wav_data, segment_size)
+            elif "gummy" in self.model:
+                text = await self._send_request_gummy(wav_data, segment_size)
+            else:
+                logger.bind(tag=TAG).error(f"语音识别模型不支持: {self.model}", exc_info=True)
+                return "", None
+            #text = await self._send_request(wav_data, segment_size)
             if text:
                 logger.bind(tag=TAG).debug(f"语音识别耗时: {time.time() - start_time:.3f}s | 结果: {text}")
                 return text, None
@@ -164,7 +209,7 @@ class ASRProvider(ASRProviderBase):
             return "", None
 
 
-class Callback(TranslationRecognizerCallback):
+class CallbackGummy(TranslationRecognizerCallback):
     def __init__(self):
         super().__init__()
         self.transcription_result = None
@@ -203,3 +248,24 @@ class Callback(TranslationRecognizerCallback):
 
     def on_complete(self) -> None:
         print('TranslationRecognizerCallback complete')
+
+class CallbackParaformer(RecognitionCallback):
+    def __init__(self):
+        super().__init__()
+        self.transcription_result = None
+
+    def on_open(self) -> None:
+        print("RecognitionCallback open.")
+
+    def on_close(self) -> None:
+        print("RecognitionCallback close.")
+
+    def on_event(self, result: RecognitionResult) -> None:
+        print('RecognitionCallback sentence: ', result.get_sentence())
+        self.transcription_result = result.get_sentence()
+
+    def on_error(self, result: RecognitionResult) -> None:
+        print('error: {}'.format(result.get_sentence()))
+
+    def on_complete(self) -> None:
+        print('RecognitionCallback complete')
