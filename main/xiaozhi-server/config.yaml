@@ -196,6 +196,14 @@ ASR:
     #gummy-chat-v1,paraformer-realtime-v2
     model: paraformer-realtime-v2
     output_dir: tmp/
+  TencentASR:
+    # token申请地址：https://console.cloud.tencent.com/cam/capi
+    # 免费领取资源：https://console.cloud.tencent.com/asr/resourcebundle
+    type: tencent
+    appid: 你的腾讯语音合成服务appid
+    secret_id: 你的腾讯语音合成服务secret_id
+    secret_key: 你的腾讯语音合成服务secret_key
+    output_dir: tmp/
 VAD:
   SileroVAD:
     threshold: 0.5
