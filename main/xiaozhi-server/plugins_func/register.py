@@ -1,5 +1,6 @@
 from config.logger import setup_logging
 from enum import Enum
+import copy
 
 TAG = __name__
 
@@ -13,6 +14,8 @@ class ToolType(Enum):
     SYSTEM_CTL = (4, "系统控制，影响正常的对话流程，如退出、播放音乐等，需要传递conn参数")
     IOT_CTL = (5, "IOT设备控制，需要传递conn参数")
     MCP_CLIENT = (6, "MCP客户端")
+
+    TB_CTL = (9, "TB系统控制")
 
     def __init__(self, code, message):
         self.code = code
@@ -91,6 +94,22 @@ class FunctionRegistry:
         self.function_registry[name] = func
         self.logger.bind(tag=TAG).info(f"函数 '{name}' 注册成功")
         return func
+
+    #添加tb系统函数-qiu
+    def register_tb_function(self, tb_device):
+        # 查找all_function_registry中是否有对应的函数
+        tb_name = tb_device["name"]
+        function_name = self.get_string_before_second_underscore(tb_name)
+        func = all_function_registry.get(function_name)
+        if not func:
+            self.logger.bind(tag=TAG).error(f"函数 '{tb_name}' 未找到")
+            return None
+        func_copy = copy.copy(func)
+        func_copy.name = tb_name
+        func_copy.description = tb_device["function_desc"]
+        self.function_registry[tb_name] = func_copy
+        self.logger.bind(tag=TAG).info(f"函数 '{tb_name}' 注册成功")
+        return func
     
     def unregister_function(self, name):
         # 注销函数，检测是否存在
@@ -109,3 +128,19 @@ class FunctionRegistry:
     
     def get_all_function_desc(self):
         return [func.description for _, func in self.function_registry.items()]
+
+    #截取第二个下划线（_）符号前面的字符串-qiu
+    def get_string_before_second_underscore(self,name):
+        # 找到第一个下划线的位置
+        first_underscore_index = name.find('_')
+        if first_underscore_index == -1:
+            return name  # 如果没有找到下划线，返回原字符串
+
+        # 从第一个下划线之后的位置开始查找第二个下划线的位置
+        second_underscore_index = name.find('_', first_underscore_index + 1)
+        if second_underscore_index == -1:
+            return name  # 如果没有找到第二个下划线，返回原字符串
+
+        # 截取从字符串开头到第二个下划线之前的部分
+        return name[:second_underscore_index]
+

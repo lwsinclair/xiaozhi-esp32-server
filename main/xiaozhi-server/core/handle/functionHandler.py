@@ -60,6 +60,30 @@ class FunctionHandler:
         for func in self.config["Intent"]["function_call"].get("functions", []):
             self.function_registry.register_function(func)
 
+        #添加tb系统函数-qiu
+        name = "tb_device_lights"
+        function_desc = {
+            "type": "function",
+            "function": {
+                "name": "tb_device_lights",
+                "description": "打开或关闭灯光。",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "switch": {
+                            "type": "boolean",
+                            "description": "打开或关闭灯光,打开为true,关闭为false"
+                        }
+                    },
+                    "required": ["switch"]
+                }
+            }
+        }
+
+        tb_devices = [dict(name=name, function_desc=function_desc)]
+        for tb_device in tb_devices:
+            self.function_registry.register_tb_function(tb_device)
+
         """home assistant需要初始化提示词"""
         append_devices_to_prompt(self.conn)
 
@@ -87,6 +111,8 @@ class FunctionHandler:
                 return func(**arguments)
             elif funcItem.type == ToolType.CHANGE_SYS_PROMPT:
                 return func(conn, **arguments)
+            elif funcItem.type == ToolType.TB_CTL:
+                return func(conn,function_name, arguments)
             else:
                 return ActionResponse(
                     action=Action.NOTFOUND, result="没有找到对应的函数", response=""
