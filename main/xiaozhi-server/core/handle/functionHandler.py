@@ -3,7 +3,7 @@ import json
 
 from config.settings import redisClient
 from plugins_func.register import FunctionRegistry, ActionResponse, Action, ToolType
-from plugins_func.functions.hass_init import append_devices_to_prompt
+from plugins_func.functions.tb_init import append_devices_to_prompt
 
 TAG = __name__
 logger = setup_logging()
@@ -63,9 +63,10 @@ class FunctionHandler:
             self.function_registry.register_function(func)
 
         #添加tb系统函数-qiu
-        tb_devices = redisClient.hgetall('tb:device')
-        for tb_key,tb_value in tb_devices.items():
-            self.function_registry.register_tb_function(tb_key,tb_value)
+        if self.function_registry.function_registry.get("tb_device"):
+            tb_devices = redisClient.hgetall('tb:device')
+            for tb_key,tb_value in tb_devices.items():
+                self.function_registry.register_tb_function(tb_key,json.loads(tb_value))
 
         """home assistant需要初始化提示词"""
         append_devices_to_prompt(self.conn)

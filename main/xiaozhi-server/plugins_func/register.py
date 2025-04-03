@@ -96,7 +96,7 @@ class FunctionRegistry:
         return func
 
     #添加tb系统函数-qiu
-    def register_tb_function(self, tb_key,tb_value):
+    def register_tb_function(self, tb_key,tb_value:dict):
         # 查找all_function_registry中是否有对应的函数
         tb_name = tb_key
         function_name = self.get_string_before_second_underscore(tb_name)
