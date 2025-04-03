@@ -36,6 +36,12 @@ log:
   # 设置数据文件路径
   data_dir: data
 
+redis:
+  host: 192.168.1.68
+  port: 6379
+  password: "redis"
+  db: 9
+
 xiaozhi:
   type: hello
   version: 1

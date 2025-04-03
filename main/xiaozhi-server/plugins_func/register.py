@@ -96,9 +96,9 @@ class FunctionRegistry:
         return func
 
     #添加tb系统函数-qiu
-    def register_tb_function(self, tb_device):
+    def register_tb_function(self, tb_key,tb_value):
         # 查找all_function_registry中是否有对应的函数
-        tb_name = tb_device["name"]
+        tb_name = tb_key
         function_name = self.get_string_before_second_underscore(tb_name)
         func = all_function_registry.get(function_name)
         if not func:
@@ -106,7 +106,7 @@ class FunctionRegistry:
             return None
         func_copy = copy.copy(func)
         func_copy.name = tb_name
-        func_copy.description = tb_device["function_desc"]
+        func_copy.description = tb_value
         self.function_registry[tb_name] = func_copy
         self.logger.bind(tag=TAG).info(f"函数 '{tb_name}' 注册成功")
         return func

@@ -1,5 +1,6 @@
 import os
 import argparse
+import redis
 from ruamel.yaml import YAML
 from collections.abc import Mapping
 from core.utils.util import read_config, get_project_dir
@@ -125,3 +126,31 @@ def check_config_file():
         error_msg += "2、将根目录的config.yaml文件复制到data下，重命名为.config.yaml\n"
         error_msg += "3、将密钥逐个复制到新的配置文件中\n"
         raise ValueError(error_msg)
+
+
+class RedisPool:
+    instance = None
+
+    def __init__(self):
+        config = load_config()
+        redis_config = config.get('redis', {})
+        self.pool = redis.ConnectionPool(host=redis_config.get("host"),
+                                         port=redis_config.get("port"),
+                                         password=redis_config.get("password"),
+                                         decode_responses=True,
+                                         db=redis_config.get("db"))
+
+    def __getConnection(self):
+        conn = redis.Redis(connection_pool=self.pool)
+        print(f"\n============redis初始化{conn.connection_pool}============")
+        if conn.ping():
+            return conn
+
+
+    @classmethod
+    def getConn(cls):
+        if RedisPool.instance is None:
+            RedisPool.instance = RedisPool()
+        return RedisPool.instance.__getConnection()
+
+redisClient = RedisPool.getConn()

@@ -1,5 +1,7 @@
 from config.logger import setup_logging
 import json
+
+from config.settings import redisClient
 from plugins_func.register import FunctionRegistry, ActionResponse, Action, ToolType
 from plugins_func.functions.hass_init import append_devices_to_prompt
 
@@ -61,28 +63,9 @@ class FunctionHandler:
             self.function_registry.register_function(func)
 
         #添加tb系统函数-qiu
-        name = "tb_device_lights"
-        function_desc = {
-            "type": "function",
-            "function": {
-                "name": "tb_device_lights",
-                "description": "打开或关闭灯光。",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "switch": {
-                            "type": "boolean",
-                            "description": "打开或关闭灯光,打开为true,关闭为false"
-                        }
-                    },
-                    "required": ["switch"]
-                }
-            }
-        }
-
-        tb_devices = [dict(name=name, function_desc=function_desc)]
-        for tb_device in tb_devices:
-            self.function_registry.register_tb_function(tb_device)
+        tb_devices = redisClient.hgetall('tb:device')
+        for tb_key,tb_value in tb_devices.items():
+            self.function_registry.register_tb_function(tb_key,tb_value)
 
         """home assistant需要初始化提示词"""
         append_devices_to_prompt(self.conn)

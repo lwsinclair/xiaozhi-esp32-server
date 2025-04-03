@@ -24,4 +24,5 @@ modelscope==1.23.2
 sherpa_onnx==1.11.0
 mcp==1.4.1
 cnlunar==0.2.0
-dashscope==1.22.2
+dashscope>=1.22.2
+redis>=5.2.1
