@@ -144,6 +144,8 @@ class RedisPool:
         conn = redis.Redis(connection_pool=self.pool)
         print(f"\n============redis初始化{conn.connection_pool}============")
         if conn.ping():
+            if not conn.get("aes"):
+                raise ValueError("============管理端aes异常============")
             return conn
 
 

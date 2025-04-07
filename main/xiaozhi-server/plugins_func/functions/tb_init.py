@@ -1,5 +1,7 @@
 from config.logger import setup_logging
 from core.utils.util import check_model_key
+from config.settings import redisClient
+import requests
 
 TAG = __name__
 logger = setup_logging()
@@ -11,6 +13,9 @@ def append_devices_to_prompt(conn):
     if conn.use_function_call_mode:
         funcs = conn.config["Intent"]["function_call"].get("functions", [])
         if "tb_device" in funcs:
+            device_id = conn.headers.get("device-id", "").replace(":", "-")
+            key_prefix = "tb:"+device_id
+
             prompt = "下面是我的智能设备，可以通过thingsboard控制\n"
             devices = conn.config["plugins"]["home_assistant"].get("devices", [])
             if len(devices) == 0:
@@ -26,6 +31,8 @@ def append_devices_to_prompt(conn):
             """
             # 更新提示词
             conn.dialogue.update_system_message(conn.prompt)
+            print(conn.prompt)
+            init_tb_token(conn)
 
 
 def initialize_tb_handler(conn):
@@ -39,3 +46,16 @@ def initialize_tb_handler(conn):
 
                 check_model_key("home_assistant", TB_CACHE['api_key'])
     return TB_CACHE
+
+def init_tb_token(conn):
+    device_id = conn.headers.get("device-id", "").replace(":", "-")
+    key_prefix = "tb:"+device_id
+    tb_token = redisClient.get(key_prefix+":token")
+    if tb_token is None:
+        #tb_url = redisClient.get('tb:url')
+        api_url = conn.config["api_url"]
+        requests.get(api_url+"/setToken?device_id="+device_id)
+
+
+
+

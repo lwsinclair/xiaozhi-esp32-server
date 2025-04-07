@@ -1,6 +1,7 @@
 from plugins_func.register import register_function, ToolType, ActionResponse, Action
 from plugins_func.functions.hass_init import initialize_hass_handler
 from config.logger import setup_logging
+from config.settings import redisClient
 import asyncio
 import requests
 
@@ -36,6 +37,9 @@ def tb_device(conn,function_name: str,param_dict: dict):
 
 
 async def handle_tb_device(conn,function_name,param_dict):
+    device_id = conn.headers.get("device-id", "").replace(":", "-")
+    tb_url = redisClient.get('tb:url')
+    tb_token = redisClient.get('tb:token')
     entity_id = ""
     HASS_CACHE = initialize_hass_handler(conn)
     api_key = HASS_CACHE['api_key']
@@ -59,60 +63,6 @@ async def handle_tb_device(conn,function_name,param_dict):
             action = "start"
         else:
             action = "turn_on"
-    elif param_dict['type'] == 'turn_off':
-        description = "设备已关闭"
-        if domain == 'cover':
-            action = "close_cover"
-        elif domain == 'vacuum':
-            action = "stop"
-        else:
-            action = "turn_off"
-    elif param_dict['type'] == 'brightness_up':
-        description = "灯光已调亮"
-        action = 'turn_on'
-        arg = 'brightness_step_pct'
-        value = 10
-    elif param_dict['type'] == 'brightness_down':
-        description = "灯光已调暗"
-        action = 'turn_on'
-        arg = 'brightness_step_pct'
-        value = -10
-    elif param_dict['type'] == 'brightness_value':
-        description = f"亮度已调整到{param_dict['input']}"
-        action = 'turn_on'
-        arg = 'brightness_pct'
-        value = param_dict['input']
-    elif param_dict['type'] == 'volume_up':
-        description = "音量已调大"
-        action = param_dict['type']
-    elif param_dict['type'] == 'volume_down':
-        description = "音量已调小"
-        action = param_dict['type']
-    elif param_dict['type'] == 'volume_set':
-        description = f"音量已调整到{param_dict['input']}"
-        action = param_dict['type']
-        arg = 'volume_level'
-        value = param_dict['input']
-    elif param_dict['type'] == 'volume_mute':
-        description = f"设备已静音"
-        action = param_dict['type']
-        arg = 'is_volume_muted'
-        value = param_dict['is_muted']
-    elif param_dict['type'] == 'pause':
-        description = f"设备已暂停"
-        action = param_dict['type']
-        if domain == 'media_player':
-            action = 'media_pause'
-        if domain == 'cover':
-            action = 'stop_cover'
-        if domain == 'vacuum':
-            action = 'pause'
-    elif param_dict['type'] == 'continue':
-        description = f"设备已继续"
-        if domain == 'media_player':
-            action = 'media_play'
-        if domain == 'vacuum':
-            action = 'start'
     else:
         return f"{domain} {param_dict.type}功能尚未支持"
 

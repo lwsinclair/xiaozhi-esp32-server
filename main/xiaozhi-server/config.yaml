@@ -40,7 +40,7 @@ redis:
   host: 192.168.1.68
   port: 6379
   password: "redis"
-  db: 9
+  db: 3
 
 xiaozhi:
   type: hello
@@ -65,6 +65,9 @@ prompt: |
   绝不：
   - 长篇大论，叽叽歪歪
   - 长时间严肃对话
+
+#管理后端url
+api_url: "http://127.0.0.1:8002"
 
 # 使用完声音文件后删除文件(Delete the sound file when you are done using it)
 delete_audio: true

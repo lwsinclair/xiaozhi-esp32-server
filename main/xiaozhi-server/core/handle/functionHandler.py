@@ -96,6 +96,7 @@ class FunctionHandler:
             elif funcItem.type == ToolType.CHANGE_SYS_PROMPT:
                 return func(conn, **arguments)
             elif funcItem.type == ToolType.TB_CTL:
+                #增加执行方法处理-qiu
                 return func(conn,function_name, arguments)
             else:
                 return ActionResponse(

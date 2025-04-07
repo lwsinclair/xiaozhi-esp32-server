@@ -212,3 +212,43 @@ def extract_json_from_string(input_string):
     if match:
         return match.group(1)  # 返回提取的 JSON 字符串
     return None
+
+#调用api -qiu
+def invoking_http_api(invoking_api_json):
+    # 解析传入的JSON字符串为字典
+    invoking_api_dict = json.loads(invoking_api_json)
+
+    # 使用headers来发起HTTP请求
+    headers_map = {}
+    headers = invoking_api_dict.get("headers", {})
+    if headers:
+        if headers.get("contentType"):
+            headers_map["Content-Type"] = headers["contentType"]
+        if headers.get("accept"):
+            headers_map["Accept"] = headers["accept"]
+        if headers.get("acceptLanguage"):
+            headers_map["Accept-Language"] = headers["acceptLanguage"]
+        if headers.get("acceptEncoding"):
+            headers_map["Accept-Encoding"] = headers["acceptEncoding"]
+        if headers.get("Authorization"):
+            headers_map["Authorization"] = headers["Authorization"]
+        if headers.get("X-Authorization"):
+            headers_map["X-Authorization"] = headers["X-Authorization"]
+
+    # 发起HTTP请求
+    method = invoking_api_dict.get("method", "GET").upper()
+    url = invoking_api_dict["url"]
+    body = invoking_api_dict.get("body", None)
+
+    if method == "GET":
+        response = requests.get(url, headers=headers_map)
+    elif method == "POST":
+        response = requests.post(url, headers=headers_map, data=body)
+    elif method == "PUT":
+        response = requests.put(url, headers=headers_map, data=body)
+    elif method == "DELETE":
+        response = requests.delete(url, headers=headers_map)
+    else:
+        raise ValueError(f"Unsupported HTTP method: {method}")
+
+    return response.text

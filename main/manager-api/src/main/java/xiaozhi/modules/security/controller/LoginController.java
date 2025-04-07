@@ -63,11 +63,11 @@ public class LoginController {
         SysUserDTO userDTO = sysUserService.getByUsername(login.getUsername());
         // 判断用户是否存在
         if (userDTO == null) {
-            throw new RenException("请检测用户和密码是否输入错误");
+            //throw new RenException("请检测用户和密码是否输入错误");
         }
         // 判断密码是否正确，不一样则进入if
         if (!PasswordUtils.matches(login.getPassword(), userDTO.getPassword())) {
-            throw new RenException("请检测用户和密码是否输入错误");
+            //throw new RenException("请检测用户和密码是否输入错误");
         }
         return sysUserTokenService.createToken(userDTO.getId());
     }
