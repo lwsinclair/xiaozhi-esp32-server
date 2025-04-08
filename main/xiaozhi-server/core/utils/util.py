@@ -7,7 +7,6 @@ import logging
 import re
 import requests
 
-
 def get_project_dir():
     """获取项目根目录"""
     return (
@@ -214,9 +213,10 @@ def extract_json_from_string(input_string):
     return None
 
 #调用api -qiu
-def invoking_http_api(invoking_api_json):
-    # 解析传入的JSON字符串为字典
-    invoking_api_dict = json.loads(invoking_api_json)
+def invoking_http_api(invoking_api_dict:dict):
+
+    from config.logger import setup_logging
+    logger = setup_logging()
 
     # 使用headers来发起HTTP请求
     headers_map = {}
@@ -235,20 +235,36 @@ def invoking_http_api(invoking_api_json):
         if headers.get("X-Authorization"):
             headers_map["X-Authorization"] = headers["X-Authorization"]
 
+    if headers:
+        headers = json.dumps(headers)
+        #headers = json.dumps(headers, ensure_ascii=False, indent=4)
     # 发起HTTP请求
     method = invoking_api_dict.get("method", "GET").upper()
     url = invoking_api_dict["url"]
     body = invoking_api_dict.get("body", None)
+    if body:
+        body = json.dumps(body)
 
-    if method == "GET":
-        response = requests.get(url, headers=headers_map)
-    elif method == "POST":
-        response = requests.post(url, headers=headers_map, data=body)
-    elif method == "PUT":
-        response = requests.put(url, headers=headers_map, data=body)
-    elif method == "DELETE":
-        response = requests.delete(url, headers=headers_map)
-    else:
-        raise ValueError(f"Unsupported HTTP method: {method}")
+    # 发起HTTP请求
+    try:
+        if method == "GET":
+            response = requests.get(url, headers=headers_map)
+        elif method == "POST":
+            response = requests.post(url, headers=headers_map, data=body)
+        elif method == "PUT":
+            response = requests.put(url, headers=headers_map, data=body)
+        elif method == "DELETE":
+            response = requests.delete(url, headers=headers_map)
+        else:
+            raise ValueError(f"Unsupported HTTP method: {method}")
 
-    return response.text
+        if response.status_code != 200:
+            logger.bind(tag=__name__).error(f"HTTP request failed. Response: {response.text}")
+            raise RuntimeError(f"HTTP request failed. Response: {response.text}")
+
+        # 返回响应内容
+        return json.loads(response.text)
+    except requests.exceptions.RequestException as e:
+        # 捕获并处理网络请求异常
+        logger.bind(tag=__name__).error(f"HTTP request successful. Response: {e}")
+        raise RuntimeError(f"An error occurred during the HTTP request: {e}")
