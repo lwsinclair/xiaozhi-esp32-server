@@ -62,14 +62,41 @@ class FunctionHandler:
         for func in self.config["Intent"]["function_call"].get("functions", []):
             self.function_registry.register_function(func)
 
-        #添加tb系统函数-qiu
-        if self.function_registry.function_registry.get("tb_device"):
-            tb_devices = redisClient.hgetall('tb:device')
-            for tb_key,tb_value in tb_devices.items():
-                self.function_registry.register_tb_function(tb_key,json.loads(tb_value))
 
-        """home assistant需要初始化提示词"""
-        append_devices_to_prompt(self.conn)
+        """tb系统需要初始化提示词"""
+        if self.function_registry.function_registry.get("tb_device"):
+            tb_device_list = append_devices_to_prompt(self.conn)
+            #添加tb系统函数-qiu
+            if tb_device_list:
+
+                all_devices = redisClient.lrange('tb:device', 0, -1)
+                device_type_dict = {}
+                # 遍历每个元素，解析 JSON 并构建结果字典
+                for item in all_devices:
+                    try:
+                        # 将 JSON 字符串反序列化为 Python 字典
+                        data = json.loads(item)
+                        # 检查字典中是否包含所需的键
+                        if 'type' in data and 'funs' in data:
+                            # 使用 'type' 作为键，'funs' 作为值
+                            device_type_dict[data['type']] = data['funs']
+                    except json.JSONDecodeError:
+                        print(f"无法解析 JSON: {item}")
+
+                # 初始化功能字典
+                func_dict = {}
+                # 遍历设备列表，直接构造功能字典
+                for device in tb_device_list:
+                    device_type = device.get("type")
+                    if device_type and device_type in device_type_dict:
+                        tb_funs = device_type_dict[device_type]
+                        for fun_name in tb_funs:
+                            function_call = redisClient.hget(f"tb:device_fun:{device_type}:{fun_name}", "function_call")
+                            func_dict[device_type+"_"+fun_name] = function_call
+
+                for tb_key,tb_value in func_dict.items():
+                    self.function_registry.register_tb_function(tb_key,json.loads(tb_value))
+
 
     def get_function(self, name):
         return self.function_registry.get_function(name)

@@ -99,8 +99,7 @@ class FunctionRegistry:
     def register_tb_function(self, tb_key,tb_value:dict):
         # 查找all_function_registry中是否有对应的函数
         tb_name = tb_key
-        function_name = self.get_string_before_second_underscore(tb_name)
-        func = all_function_registry.get(function_name)
+        func = all_function_registry.get("tb_device")
         if not func:
             self.logger.bind(tag=TAG).error(f"函数 '{tb_name}' 未找到")
             return None

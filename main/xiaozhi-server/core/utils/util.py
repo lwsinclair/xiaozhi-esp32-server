@@ -235,9 +235,6 @@ def invoking_http_api(invoking_api_dict:dict):
         if headers.get("X-Authorization"):
             headers_map["X-Authorization"] = headers["X-Authorization"]
 
-    if headers:
-        headers = json.dumps(headers)
-        #headers = json.dumps(headers, ensure_ascii=False, indent=4)
     # 发起HTTP请求
     method = invoking_api_dict.get("method", "GET").upper()
     url = invoking_api_dict["url"]
@@ -268,3 +265,7 @@ def invoking_http_api(invoking_api_dict:dict):
         # 捕获并处理网络请求异常
         logger.bind(tag=__name__).error(f"HTTP request successful. Response: {e}")
         raise RuntimeError(f"An error occurred during the HTTP request: {e}")
+    except Exception as e:
+        # 捕获所有其他异常
+        logger.bind(tag=__name__).error(f"An unexpected error occurred: {e}")
+        raise RuntimeError(f"An unexpected error occurred: {e}")

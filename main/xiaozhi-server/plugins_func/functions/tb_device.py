@@ -37,7 +37,7 @@ def tb_device(conn,function_name: str,param_dict: dict):
 
 
 async def handle_tb_device(conn,function_name,param_dict):
-    device_id = conn.headers.get("device-id", "").replace(":", "-")
+    device_id = conn.headers.get("device-id", "")
     tb_url = redisClient.get('tb:url')
     tb_token = redisClient.get('tb:token')
     entity_id = ""
