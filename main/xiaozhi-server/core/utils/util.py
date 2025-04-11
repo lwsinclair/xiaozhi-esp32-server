@@ -212,6 +212,18 @@ def extract_json_from_string(input_string):
         return match.group(1)  # 返回提取的 JSON 字符串
     return None
 
+def find_json(s):
+    # 找到第一个 '{' 的位置
+    start_index = s.find('{')
+    # 找到最后一个 '}' 的位置
+    end_index = s.rfind('}')
+    # 检查是否找到了起始和结束位置
+    if start_index != -1 and end_index != -1 and start_index < end_index:
+        result = s[start_index:end_index + 1]  # 加1以包含最后一个 '}'
+    else:
+        result = None  # 或者其他表示未找到有效子字符串的值
+    return result
+
 #调用api -qiu
 def invoking_http_api(invoking_api_dict:dict):
 
@@ -255,17 +267,19 @@ def invoking_http_api(invoking_api_dict:dict):
         else:
             raise ValueError(f"Unsupported HTTP method: {method}")
 
-        if response.status_code != 200:
-            logger.bind(tag=__name__).error(f"HTTP request failed. Response: {response.text}")
-            raise RuntimeError(f"HTTP request failed. Response: {response.text}")
+        #if response.status_code != 200:
+            #logger.bind(tag=__name__).error(f"HTTP request failed. Response: {response.text}")
+            #raise RuntimeError(f"HTTP request failed. Response: {response.text}")
 
-        # 返回响应内容
-        return json.loads(response.text)
     except requests.exceptions.RequestException as e:
         # 捕获并处理网络请求异常
         logger.bind(tag=__name__).error(f"HTTP request successful. Response: {e}")
-        raise RuntimeError(f"An error occurred during the HTTP request: {e}")
+        #return json.loads(e.response.text)
     except Exception as e:
         # 捕获所有其他异常
         logger.bind(tag=__name__).error(f"An unexpected error occurred: {e}")
-        raise RuntimeError(f"An unexpected error occurred: {e}")
+        #json_dumps = find_json(str(e.args[0]))
+        #raise RuntimeError(f"An unexpected error occurred: {e}")
+    finally:
+        # 返回响应内容
+        return response

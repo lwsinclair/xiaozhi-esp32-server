@@ -71,6 +71,7 @@ def initialize_tb_handler(conn):
 
 #初始化tb系统token缓存
 def init_tb_token(device_id):
+    token = None
     if device_id:
         key_prefix = "tb:"+device_id
         tb_token = redisClient.get(key_prefix+":token")
@@ -83,9 +84,12 @@ def init_tb_token(device_id):
                     "password": redisClient.get(key_prefix+":password")
                 }
             }
-            response_dict = invoking_http_api(invoking_api)
+            response = invoking_http_api(invoking_api)
+            response_dict = json.loads(response.text)
             redisClient.set(key_prefix+":token", response_dict["token"])
             redisClient.expire(key_prefix + ":token", 1800)
+            token = response_dict["token"]
+    return token
 
 #获取tb用户
 def getTbUser(device_id):
@@ -96,7 +100,8 @@ def getTbUser(device_id):
             "Authorization": "Bearer "+redisClient.get(key_prefix+":token")
         }
     }
-    return invoking_http_api(invoking_api)
+    response = invoking_http_api(invoking_api)
+    return json.loads(response.text)
 
 #获取tb设备
 def getTbDevices(device_id,customer_id,**kwargs):
@@ -112,4 +117,8 @@ def getTbDevices(device_id,customer_id,**kwargs):
             "Authorization": "Bearer "+redisClient.get(key_prefix+":token")
         }
     }
-    return invoking_http_api(invoking_api)["data"]
+
+    response = invoking_http_api(invoking_api)
+    if response.status_code == 200:
+        return json.loads(response.text)["data"]
+
