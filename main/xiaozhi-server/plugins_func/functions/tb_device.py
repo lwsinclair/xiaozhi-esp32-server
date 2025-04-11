@@ -17,7 +17,7 @@ tb_device_function_desc = {
     "type": "function",
     "function": {
         "name": "tb_device",
-        "description": "用于查询当前用户可控制的设备列表，不涉及设备操作。",
+        "description": "用于查询当前用户可控制的设备列表，不涉及设备操作,只用于当用户要明确查询能够控制哪些设备时才触发。",
         "parameters": {
             "type": "object",
             "properties": {
@@ -64,7 +64,7 @@ async def handle_tb_device(conn,function_name,param_dict):
             description = "您的账号下没有能控制的智能设备"
 
         action_response.action = Action.RESPONSE
-        action_response.response = description
+
     else:
         sre_parse = function_name.split("_")
         device_views = json.loads(control_device_dict.get(sre_parse[0]))
@@ -91,9 +91,13 @@ async def handle_tb_device(conn,function_name,param_dict):
             else:
                 pass
         else:
+            names = ""
             for device_view in device_views:
-                pass
+                names += device_view["name"] + ","
+            description = f"小智为您匹配到{len(device_views)}台设备,分别为{names}您要控制的是那一台？"
+            action_response.action = Action.RESPONSE
 
+    action_response.response = description
     action_response.result = description
 
     return action_response
