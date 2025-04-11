@@ -22,22 +22,25 @@ def append_devices_to_prompt(conn):
         customer_id = tbuser["customerId"]["id"]
         tb_device_list = getTbDevices(device_id,customer_id)
 
-        prompt = "下面是我的设备，可以通过小智控制\n"
-        if len(tb_device_list) == 0:
-            return
+        prompt = "下面是我的设备，可以通过小智控制:"
+        #if len(tb_device_list) == 0:
+            #return
 
-        control_device_dict = {}
+        if tb_device_list:
+            control_device_dict = {}
+            for tb_device in tb_device_list:
+                control_device_list = control_device_dict.get(tb_device["type"], [])
+                control_device_list.append(tb_device)
+                control_device_dict[tb_device["type"]] = control_device_list
+
+            # 序列化字典中的列表为 JSON 字符串
+            control_device_dict_serialized = {k: json.dumps(v) for k, v in control_device_dict.items()}
+            redisClient.hmset(f"tb:{device_id}:control_device",control_device_dict_serialized)
+        else:
+            redisClient.delete(f"tb:{device_id}:control_device")
+
         for tb_device in tb_device_list:
-            control_device_list = control_device_dict.get(tb_device["type"], [])
-            control_device_list.append(tb_device)
-            control_device_dict[tb_device["type"]] = control_device_list
-
-        # 序列化字典中的列表为 JSON 字符串
-        control_device_dict_serialized = {k: json.dumps(v) for k, v in control_device_dict.items()}
-        redisClient.hmset(f"tb:{device_id}:control_device",control_device_dict_serialized)
-
-        for tb_device in tb_device_list:
-            prompt += tb_device["name"] + "\n"
+            prompt += tb_device["name"] + ","
         conn.prompt += prompt
         """
         "," + tb_device["id"]["id"] + 
