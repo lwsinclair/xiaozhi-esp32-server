@@ -85,17 +85,27 @@ class FunctionHandler:
 
                 # 初始化功能字典
                 func_dict = {}
+                tb_names = {e["name"] for e in tb_device_list}
+                tb_name_fun = {
+                    "type": "list",
+                    "description": redisClient.get('tb:name_desc').format(names=tb_names)
+                }
                 # 遍历设备列表，直接构造功能字典
                 for device in tb_device_list:
                     device_type = device.get("type")
+                    tb_names.add(device["name"])
                     if device_type and device_type in device_type_dict:
                         tb_funs = device_type_dict[device_type]
                         for fun_name in tb_funs:
-                            function_call = redisClient.hget(f"tb:device_fun:{device_type}:{fun_name}", "function_call")
+                            function_call = json.loads(redisClient.hget(f"tb:device_fun:{device_type}:{fun_name}", "function_call"))
+                            properties = function_call["function"]["parameters"]["properties"]
+                            properties["tb_name"] = tb_name_fun
                             func_dict[device_type+"_"+fun_name] = function_call
 
+
+                # 遍历功能字典，注册功能
                 for tb_key,tb_value in func_dict.items():
-                    self.function_registry.register_tb_function(tb_key,json.loads(tb_value))
+                    self.function_registry.register_tb_function(tb_key,tb_value)
 
 
     def get_function(self, name):

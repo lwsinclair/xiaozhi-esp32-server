@@ -28,14 +28,8 @@ tb_device_function_desc = {
     }
 }
 
-tb_name = {
-    "type": "string",
-    "description": "需要操作设备的名称,只在set列表里匹配返回对应的名称,匹配不到不返回"
-}
 
-
-
-@register_function("tb_device", tb_device_function_desc, ToolType.TB_CTL)
+@register_function(tb_fun, tb_device_function_desc, ToolType.TB_CTL)
 def tb_device(conn,function_name: str,param_dict: dict):
     try:
         future = asyncio.run_coroutine_threadsafe(
@@ -72,6 +66,27 @@ async def handle_tb_device(conn,function_name,param_dict):
     else:
         sre_parse = function_name.split("_")
         device_views = json.loads(control_device_dict.get(sre_parse[0]))
+        tb_names = param_dict.get("tb_name", None)
+        if tb_names and len(device_views)>1:
+            #device_views = [e for e in device_views if e["name"] in tb_name]
+            # 初始化匹配结果列表
+            matched_devices = []
+
+            for tb_name in tb_names:
+                # 左模糊匹配
+                left_match = [e for e in device_views if (e["name"].startswith(tb_name) and not e["name"].endswith(tb_name))]
+                # 右模糊匹配
+                right_match = [e for e in device_views if (not e["name"].startswith(tb_name) and e["name"].endswith(tb_name))]
+                # 精确匹配
+                exact_match = [e for e in device_views if e["name"] == tb_name]
+
+                # 合并匹配结果
+                matched_devices.extend(left_match + right_match + exact_match)
+
+            # 去重
+            if matched_devices:
+                device_views = matched_devices
+
         fun_key = f"tb:device_fun:{function_name.replace('_',':')}"
         method = redisClient.hget(fun_key,"method")
         if len(device_views) == 1:
@@ -84,7 +99,7 @@ async def handle_tb_device(conn,function_name,param_dict):
                 },
                 "body": {
                     "method": method,
-                    "params": param_dict,
+                    "params": param_dict["tb_args"],
                     "persistent": False,
                     "timeout": 5000
                 }
