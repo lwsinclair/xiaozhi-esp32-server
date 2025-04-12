@@ -71,7 +71,7 @@ def initialize_tb_handler(conn):
 
 #初始化tb系统token缓存
 def init_tb_token(device_id):
-    token = None
+    tb_token = None
     if device_id:
         key_prefix = "tb:"+device_id
         tb_token = redisClient.get(key_prefix+":token")
@@ -88,8 +88,8 @@ def init_tb_token(device_id):
             response_dict = json.loads(response.text)
             redisClient.set(key_prefix+":token", response_dict["token"])
             redisClient.expire(key_prefix + ":token", 1800)
-            token = response_dict["token"]
-    return token
+            tb_token = response_dict["token"]
+    return tb_token
 
 #获取tb用户
 def getTbUser(device_id):

@@ -28,6 +28,12 @@ tb_device_function_desc = {
     }
 }
 
+tb_name = {
+    "type": "string",
+    "description": "需要操作设备的名称,只在set列表里匹配返回对应的名称,匹配不到不返回"
+}
+
+
 
 @register_function("tb_device", tb_device_function_desc, ToolType.TB_CTL)
 def tb_device(conn,function_name: str,param_dict: dict):
@@ -44,9 +50,7 @@ def tb_device(conn,function_name: str,param_dict: dict):
 async def handle_tb_device(conn,function_name,param_dict):
     device_id = conn.headers.get("device-id", "00:11:22:33:44:55")
     tb_url = redisClient.get('tb:url')
-    tb_token = redisClient.get("tb:"+device_id+":token")
-    if tb_token is None:
-        tb_token = init_tb_token(device_id)
+    tb_token = init_tb_token(device_id)
     control_device_dict = redisClient.hgetall(f"tb:{device_id}:control_device")
     action_response = ActionResponse(action=Action.REQLLM, result="执行成功", response=None)
     description = ""
