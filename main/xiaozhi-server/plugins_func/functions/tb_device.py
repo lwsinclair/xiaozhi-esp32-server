@@ -16,7 +16,7 @@ tb_rpc_url = "/api/rpc/oneway/{deviceId}"
 tb_device_function_desc = {
     "type": "function",
     "function": {
-        "name": "tb_device",
+        "name": tb_fun,
         "description": "用于查询当前用户可控制的设备列表，不涉及设备操作,只用于当用户要明确查询能够控制哪些设备时才触发。",
         "parameters": {
             "type": "object",
@@ -47,19 +47,19 @@ async def handle_tb_device(conn,function_name,param_dict):
     tb_token = init_tb_token(device_id)
     control_device_dict = redisClient.hgetall(f"tb:{device_id}:control_device")
     action_response = ActionResponse(action=Action.REQLLM, result="执行成功", response=None)
-    description = ""
     if function_name == tb_fun:
         description = "小智能为您控制的智能设备为："
         if control_device_dict:
-            device_set = set()
-            for tb_key,tb_value in control_device_dict.items():
-                for tb_view in json.loads(tb_value):
-                    device_set.add(tb_view["name"])
+            #device_set = set()
+            #for tb_key,tb_value in control_device_dict.items():
+                #for tb_view in json.loads(tb_value):
+                    #device_set.add(tb_view["name"])
 
-            for tb_name in device_set:
-                description += tb_name + ","
+            device_set = {tb_view["name"] for tb_value in control_device_dict.values() for tb_view in json.loads(tb_value)}
+            #for tb_name in device_set:
+            description += ", ".join(device_set) + "。"
         else:
-            description = "您的账号下没有能控制的智能设备"
+            description = "您的账号下没有能控制的智能设备。"
 
         action_response.action = Action.RESPONSE
 
@@ -108,7 +108,8 @@ async def handle_tb_device(conn,function_name,param_dict):
             if response.status_code != 200:
                 description = f"设置失败，错误码: {response.status_code}"
             else:
-                pass
+                description = "设置成功"
+
         else:
             names = ""
             for device_view in device_views:
@@ -117,6 +118,6 @@ async def handle_tb_device(conn,function_name,param_dict):
             action_response.action = Action.RESPONSE
 
     action_response.response = description
-    action_response.result = description
+    #action_response.result = description
 
     return action_response

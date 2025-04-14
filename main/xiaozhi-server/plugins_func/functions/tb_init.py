@@ -34,7 +34,7 @@ def append_devices_to_prompt(conn):
                 control_device_dict[tb_device["type"]] = control_device_list
 
             # 序列化字典中的列表为 JSON 字符串
-            control_device_dict_serialized = {k: json.dumps(v) for k, v in control_device_dict.items()}
+            control_device_dict_serialized = {k: json.dumps(v, ensure_ascii=False) for k, v in control_device_dict.items()}
             redisClient.hmset(f"tb:{device_id}:control_device",control_device_dict_serialized)
         else:
             redisClient.delete(f"tb:{device_id}:control_device")
