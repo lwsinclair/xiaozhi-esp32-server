@@ -51,7 +51,7 @@ class ASRProvider(ASRProviderBase):
 
         return file_path
 
-    async def _send_request_gummy(self, audio_data: List[bytes], segment_size: int) -> Optional[str]:
+    async def _send_request_gummy(self, audio_data, segment_size: int) -> Optional[str]:
         """Send request to Aliyun ASR service."""
         try:
             # 创建回调对象
@@ -91,7 +91,7 @@ class ASRProvider(ASRProviderBase):
             logger.bind(tag=TAG).error(f"ASR request failed: {e}", exc_info=True)
             return None
 
-    async def _send_request_paraformer(self, audio_data: List[bytes], segment_size: int) -> Optional[str]:
+    async def _send_request_paraformer(self, audio_data, segment_size: int) -> Optional[str]:
         try:
             # 创建回调对象
             callback = CallbackParaformer()

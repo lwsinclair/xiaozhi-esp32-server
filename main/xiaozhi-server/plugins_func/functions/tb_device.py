@@ -106,6 +106,7 @@ async def handle_tb_device(conn,function_name,param_dict):
             }
             response = invoking_http_api(invoking_api)
             if response.status_code != 200:
+                logger.bind(tag=TAG).error(f"thingsBoard api调用失败: {response}")
                 description = f"设置失败，错误码: {response.status_code}"
             else:
                 description = "设置成功"
@@ -114,7 +115,7 @@ async def handle_tb_device(conn,function_name,param_dict):
             names = ""
             for device_view in device_views:
                 names += device_view["name"] + ","
-            description = f"小智为您匹配到{len(device_views)}台设备,分别为{names}您要控制的是那一台？"
+            description = f"小智为您匹配到{len(device_views)}台设备,分别为{names}您要控制的是哪一台？"
             action_response.action = Action.RESPONSE
 
     action_response.response = description
