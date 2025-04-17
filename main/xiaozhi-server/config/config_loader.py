@@ -137,6 +137,7 @@ def get_config_from_api(config):
         "url": api_url,
         "secret": secret,
     }
+    config_data["redis"] = config["redis"]
     return config_data
 
 

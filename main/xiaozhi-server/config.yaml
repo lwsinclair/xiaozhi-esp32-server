@@ -139,9 +139,6 @@ prompt: |
   - 长篇大论，叽叽歪歪
   - 长时间严肃对话
 
-#管理后端url
-api_url: "http://127.0.0.1:8002"
-
 # 阿里百炼平台api_key
 ali_bail_api_key: &ali_bail_api_key you_api_key
 
