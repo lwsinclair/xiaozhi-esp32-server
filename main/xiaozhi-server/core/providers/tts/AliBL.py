@@ -11,7 +11,10 @@ class TTSProvider(TTSProviderBase):
     def __init__(self, config, delete_audio_file):
         super().__init__(config, delete_audio_file)
         self.model = config.get("model")
-        self.voice = config.get("voice")
+        if config.get("private_voice"):
+            self.voice = config.get("private_voice")
+        else:
+            self.voice = config.get("voice")
 
         dashscope.api_key = config.get("api_key")
 
