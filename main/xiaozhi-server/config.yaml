@@ -140,7 +140,7 @@ prompt: |
   - 长时间严肃对话
 
 # 阿里百炼平台api_key
-ali_bail_api_key: &ali_bail_api_key you_api_key
+AliBL_api_key: &AliBL_api_key you_api_key
 
 # 具体处理时选择的模块(The module selected for specific processing)
 selected_module:
@@ -223,8 +223,8 @@ ASR:
     cluster: volcengine_input_common
     output_dir: tmp/
   AliYunBaiLASR:
-    type: aliyun_bail
-    api_key: *ali_bail_api_key
+    type: AliBL
+    api_key: *AliBL_api_key
     #gummy-chat-v1,paraformer-realtime-v2
     model: paraformer-realtime-v2
     output_dir: tmp/
@@ -252,7 +252,7 @@ LLM:
     # 可在这里找到你的 api_key https://bailian.console.aliyun.com/?apiKey=1#/api-key
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     model_name: qwen-turbo
-    api_key: *ali_bail_api_key
+    api_key: *AliBL_api_key
     temperature: 0.7  # 温度值
     max_tokens: 500   # 最大生成token数
     top_p: 1         
@@ -613,8 +613,8 @@ TTS:
     output_dir: tmp/
   AliyunBaiLTTS:
     # 阿里云百炼大模型
-    type: aliyun_bail
-    api_key: *ali_bail_api_key
+    type: AliBL
+    api_key: *AliBL_api_key
     model: cosyvoice-v1
     voice: longtong
     output_dir: tmp/
