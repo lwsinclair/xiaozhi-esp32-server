@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/xinnan-tech-xiaozhi-esp32-server-badge.png)](https://mseep.ai/app/xinnan-tech-xiaozhi-esp32-server)
+
 [![Banners](docs/images/banner1.png)](https://github.com/xinnan-tech/xiaozhi-esp32-server)
 
 
